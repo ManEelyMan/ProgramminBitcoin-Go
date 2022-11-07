@@ -66,6 +66,7 @@ func NewOperation(reader io.Reader) (Operation, error) {
 		data = make([]byte, 0)
 
 	} else if opCode >= 0x01 && opCode <= 0x4e {
+		opCodeName = "[StackData]"
 		// We have to decode the varint to see how much data to push on the stack.
 		b, err := extractScriptData(opCode, reader)
 		if err != nil {

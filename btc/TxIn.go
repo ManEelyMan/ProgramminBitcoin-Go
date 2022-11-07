@@ -25,13 +25,21 @@ func ParseTxIn(reader io.Reader) TxIn {
 	return TxIn{PreviousTxHash: prevTx, PreviousTxId: prevTxId, ScriptSignature: &script, Sequence: sequence}
 }
 
-func (txin *TxIn) Serialize(writer io.Writer, sigHash bool, testNet bool) {
+func (txin *TxIn) Serialize(writer io.Writer, sigHash bool, testNet bool, redeemScript *Script) {
 	utility.WriteBigInt(writer, txin.PreviousTxHash, true)
 	utility.WriteUint32(writer, txin.PreviousTxId, true)
 
 	if sigHash {
 		spk := txin.ScriptPubKey(testNet)
-		spk.Serialize(writer)
+		clone := Script{}
+
+		if redeemScript != nil {
+			clone.RawData = redeemScript.RawData
+		} else {
+			clone.RawData = append(clone.RawData, spk.RawData...)
+
+		}
+		clone.Serialize(writer)
 	} else {
 		txin.ScriptSignature.Serialize(writer)
 	}

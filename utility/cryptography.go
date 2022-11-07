@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -42,6 +43,32 @@ func Hash160(bytes []byte) []byte {
 
 const BASE58_ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
+func DecodeBase58(addr string) ([]byte, bool) {
+
+	var num *big.Int = big.NewInt(0)
+
+	for _, c := range addr {
+		var digit int = strings.IndexRune(BASE58_ALPHABET, c)
+		if digit == -1 {
+			return nil, false
+		}
+
+		num = num.Mul(num, big.NewInt(58))
+		num = num.Add(num, big.NewInt(int64(digit)))
+	}
+
+	bin := num.Bytes()
+	checksum := bin[len(bin)-4:]
+
+	h256 := Hash256(bin[:len(bin)-4])
+
+	if !bytes.Equal(checksum, h256[:4]) {
+		return nil, false
+	}
+
+	return bin[1 : len(bin)-4], true
+}
+
 func EncodeBase58(bytes []byte) string {
 
 	count := 0
@@ -56,7 +83,6 @@ func EncodeBase58(bytes []byte) string {
 	num := new(big.Int)
 	num.SetBytes(bytes)
 	mod := big.NewInt(0)
-	// fmt.Printf("num %+v", num)
 
 	num.SetBytes(bytes)
 
@@ -78,4 +104,19 @@ func EncodeBase58Checksum(bytes []byte) string {
 	hash256 := Hash256(bytes)
 	copy(concat[len(concat)-4:], hash256[:4])
 	return EncodeBase58(concat)
+}
+
+func CreateBase58AddressFromHash(leadByte byte, hash []byte) string {
+	concat := make([]byte, len(hash)+1)
+	concat[0] = leadByte
+	copy(concat[1:], hash)
+	return EncodeBase58Checksum(concat)
+}
+
+func H160ToP2PKHAddress(hash []byte, testnet bool) string {
+	return CreateBase58AddressFromHash(IIF(testnet, byte(0x6f), byte(0x00)).(byte), hash)
+}
+
+func H160ToP2SHAddress(hash []byte, testnet bool) string {
+	return CreateBase58AddressFromHash(IIF(testnet, byte(0xc4), byte(0x05)).(byte), hash)
 }

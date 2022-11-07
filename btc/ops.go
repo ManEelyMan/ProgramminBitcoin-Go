@@ -938,8 +938,8 @@ func opCheckMultiSig(context *ExecutionContext) bool {
 		return false
 	}
 
-	pubKeys := make([]ecc.Point, n+1)
-	for i := 0; int64(i) <= n; i++ {
+	pubKeys := make([]ecc.Point, n)
+	for i := 0; int64(i) < n; i++ {
 		tmp, _ := context.Stack.Pop()
 		pubKeys[i] = ecc.NewPointFromSEC(tmp)
 	}
@@ -956,10 +956,10 @@ func opCheckMultiSig(context *ExecutionContext) bool {
 		return false
 	}
 
-	sigs := make([]ecc.Signature, m+1)
-	for i := 0; int64(i) <= m; i++ {
+	sigs := make([]ecc.Signature, m)
+	for i := 0; int64(i) < m; i++ {
 		tmp, _ := context.Stack.Pop()
-		sigs[i] = ecc.NewSignatureFromDER(utility.ReverseBytes(tmp)) // signature is assumed to be using SIGHASH_ALL
+		sigs[i] = ecc.NewSignatureFromDER(tmp[:len(tmp)-1]) // signature is assumed to be using SIGHASH_ALL
 	}
 
 	// OP_CHECKMULTISIG bug: Pop off one additional, unused element.
@@ -968,14 +968,15 @@ func opCheckMultiSig(context *ExecutionContext) bool {
 		return false
 	}
 
+	pointCounter := 0
 	for i := 0; i < len(sigs); i++ {
-		if len(pubKeys) == 0 {
+		if pointCounter >= len(pubKeys) {
 			return false
 		}
 
 		for len(pubKeys) > 0 {
-			pk := pubKeys[0]
-			pubKeys = pubKeys[1:]
+			pk := pubKeys[pointCounter]
+			pointCounter++
 
 			if pk.Verify(context.Hash, sigs[i]) {
 				break

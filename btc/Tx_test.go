@@ -173,7 +173,7 @@ func TestInputPubKey(t *testing.T) {
 	txIn := btc.NewTxIn(txHash, uint32(index), nil, 0xffffffff)
 	want, _ := hex.DecodeString("1976a914a802fc56c704ce87c42d7c92eb75e7896bdc41ae88ac")
 
-	if bytes.Equal(want, txIn.ScriptPubKey(false).Data) {
+	if bytes.Equal(want, txIn.ScriptPubKey(false).RawData) {
 		t.Error()
 	}
 }
@@ -200,7 +200,8 @@ func TestSigHash(t *testing.T) {
 	fetch := btc.GetTxFetcher()
 	tx := fetch.FetchById(utility.HexStringToBigInt("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03"), false, false)
 	expected, _ := hex.DecodeString("27e0c5994dec7824e56dec6b2fcb342eb7cdb0d0957c2fce9882f715e85d81a6")
-	if bytes.Equal(tx.SigHash(0), expected) {
+	hash := tx.SigHash(0, nil)
+	if !bytes.Equal(hash, expected) {
 		t.Error()
 	}
 }
@@ -216,7 +217,15 @@ func TestVerifyP2PKH(t *testing.T) {
 	if !tx2.Verify() {
 		t.Error()
 	}
+}
 
+func TestVerifyP2SH(t *testing.T) {
+	fetcher := btc.GetTxFetcher()
+	tx := fetcher.FetchById(utility.HexStringToBigInt("46df1a9484d0a81d03ce0ee543ab6e1a23ed06175c104a178268fad381216c2b"), false, false)
+
+	if !tx.Verify() {
+		t.Error()
+	}
 }
 
 func roundTripParseAndSerializationCheck(encodedHex string) bool {
@@ -225,7 +234,7 @@ func roundTripParseAndSerializationCheck(encodedHex string) bool {
 	tx := btc.ParseTx(reader, false)
 
 	writer := bytes.NewBuffer(make([]byte, 0))
-	tx.Serialize(writer, -1)
+	tx.Serialize(writer, -1, nil)
 
 	b2 := writer.Bytes()
 

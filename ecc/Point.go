@@ -186,7 +186,7 @@ func NewPointFromSEC(buffer []byte) Point {
 		return NewSecp256k1Point(x, y)
 	} else {
 		x := new(big.Int)
-		x.SetBytes(buffer[1:33])
+		x.SetBytes(buffer[1:])
 		yEven := (buffer[0] == 0x02)
 
 		alpha := ModAdd(ModPowInt(x, 3), B)
@@ -210,10 +210,7 @@ func (p *Point) Hash160(compressed bool) []byte {
 
 func (p *Point) Address(compressed bool, testnet bool) string {
 	h160 := p.Hash160(compressed)
-	concat := make([]byte, len(h160)+1)
-	concat[0] = utility.IIF(testnet, (byte)(0x6f), (byte)(0x00)).(byte)
-	copy(concat[1:], h160)
-	return utility.EncodeBase58Checksum(concat)
+	return utility.H160ToP2PKHAddress(h160, testnet)
 }
 
 func (p *Point) Clone() Point {

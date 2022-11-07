@@ -50,27 +50,27 @@ func (tx *Tx) Id() string {
 }
 
 func (tx *Tx) Hash() []byte {
-	h := tx.SigHash(-1)
+	h := tx.SigHash(-1, nil)
 	return utility.ReverseBytes(h)
 }
 
-func (tx *Tx) SigHash(txSigHash int) []byte {
+func (tx *Tx) SigHash(txSigHash int, redeemScript *Script) []byte {
 
 	buff := bytes.NewBuffer(make([]byte, 0))
-	tx.Serialize(buff, txSigHash)
+	tx.Serialize(buff, txSigHash, redeemScript)
 	if txSigHash >= 0 {
 		utility.WriteUint32(buff, SIGHASH_ALL, true)
 	}
 	return utility.Hash256(buff.Bytes())
 }
 
-func (tx *Tx) Serialize(writer io.Writer, txSigHash int) {
+func (tx *Tx) Serialize(writer io.Writer, txSigHash int, redeemScript *Script) {
 
 	utility.WriteUint32(writer, tx.Version, true)
 	utility.WriteVarInt(writer, (uint64)(len(tx.TxIns)))
 
 	for i, txin := range tx.TxIns {
-		txin.Serialize(writer, i == txSigHash, tx.TestNet)
+		txin.Serialize(writer, i == txSigHash, tx.TestNet, redeemScript)
 	}
 
 	utility.WriteVarInt(writer, (uint64)(len(tx.TxOuts)))
@@ -114,7 +114,23 @@ func (tx *Tx) Verify() bool {
 func (tx *Tx) VerifyInput(index int) bool {
 	txIn := tx.TxIns[index]
 	scriptPubKey := txIn.ScriptPubKey(tx.TestNet)
-	z := tx.SigHash(index)
+
+	var redeemScript *Script = nil
+	if scriptPubKey.IsPayToScriptHash() {
+		var redeemScriptBytes []byte = nil
+		sigOps := txIn.ScriptSignature.GetOperations()
+		redeemScriptBytes = sigOps[len(sigOps)-1].(AddDataToStackOperation).Data // The redeem script is the last operation in the signature.
+
+		// Create a buffer with a prepended varint.
+		buff := bytes.NewBuffer(make([]byte, 0))
+		utility.WriteVarInt(buff, uint64(len(redeemScriptBytes)))
+		redeemScriptBytes = append(buff.Bytes(), redeemScriptBytes...)
+		buff = bytes.NewBuffer(redeemScriptBytes)
+		s := ParseScript(buff)
+		redeemScript = &s
+	}
+
+	z := tx.SigHash(index, redeemScript)
 
 	hash := big.NewInt(0)
 	hash.SetBytes(z)

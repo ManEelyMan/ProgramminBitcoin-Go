@@ -21,15 +21,17 @@ func ParseBlock(reader io.Reader) (Block, error) {
 	if err != nil {
 		return Block{}, err
 	}
+	prevBlock = utility.ReverseBytes(prevBlock)
 
 	merkleRoot, err := utility.ReadBytes(reader, 32)
 	if err != nil {
 		return Block{}, err
 	}
+	merkleRoot = utility.ReverseBytes(merkleRoot)
 
 	timestamp := utility.ReadUint32(reader, true)
-	bits := utility.ReadUint32(reader, true)
-	nonce := utility.ReadUint32(reader, true)
+	bits := utility.ReadUint32(reader, false)
+	nonce := utility.ReadUint32(reader, false)
 
 	block := Block{Version: version, Timestamp: timestamp, Bits: bits, Nonce: nonce}
 	copy(block.PreviousBlock[:], prevBlock)
@@ -40,11 +42,11 @@ func ParseBlock(reader io.Reader) (Block, error) {
 
 func (b *Block) Serialize(writer io.Writer) {
 	utility.WriteUint32(writer, b.Version, true)
-	writer.Write(b.PreviousBlock[:])
-	writer.Write(b.MerkleRoot[:])
+	writer.Write(utility.ReverseBytes(b.PreviousBlock[:]))
+	writer.Write(utility.ReverseBytes(b.MerkleRoot[:]))
 	utility.WriteUint32(writer, b.Timestamp, true)
-	utility.WriteUint32(writer, b.Bits, true)
-	utility.WriteUint32(writer, b.Nonce, true)
+	utility.WriteUint32(writer, b.Bits, false)
+	utility.WriteUint32(writer, b.Nonce, false)
 }
 
 func (b *Block) Hash() []byte {
@@ -52,6 +54,18 @@ func (b *Block) Hash() []byte {
 	buffer := bytes.NewBuffer(make([]byte, 0))
 	b.Serialize(buffer)
 
-	hash := utility.Hash256(utility.ReverseBytes(buffer.Bytes()))
+	hash := utility.ReverseBytes(utility.Hash256(buffer.Bytes()))
 	return hash
+}
+
+func (b *Block) BIP09() bool {
+	return b.Version>>29 == 0b001
+}
+
+func (b *Block) BIP91() bool {
+	return (b.Version>>4)&1 == 1
+}
+
+func (b *Block) BIP141() bool {
+	return (b.Version>>1)&1 == 1
 }

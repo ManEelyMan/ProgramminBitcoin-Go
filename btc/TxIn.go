@@ -3,30 +3,35 @@ package btc
 import (
 	"bitcoin-go/utility"
 	"io"
-	"math/big"
 )
 
 type TxIn struct {
-	PreviousTxHash  *big.Int
+	PreviousTxHash  [32]byte
 	PreviousTxId    uint32
 	ScriptSignature *Script
 	Sequence        uint32
 }
 
-func NewTxIn(prevTxHash *big.Int, prevTxId uint32, scriptSig *Script, sequence uint32) TxIn {
+func NewTxIn(prevTxHash [32]byte, prevTxId uint32, scriptSig *Script, sequence uint32) TxIn {
 	return TxIn{PreviousTxHash: prevTxHash, PreviousTxId: prevTxId, ScriptSignature: scriptSig, Sequence: sequence}
 }
 
 func ParseTxIn(reader io.Reader) TxIn {
-	prevTx := utility.ReadBigInt(reader, true)
+	prevTx, _ := utility.ReadBytes(reader, 32)
+	prevTx = utility.ReverseBytes(prevTx)
 	prevTxId := utility.ReadUint32(reader, true)
 	script := ParseScript(reader)
 	sequence := utility.ReadUint32(reader, true)
-	return TxIn{PreviousTxHash: prevTx, PreviousTxId: prevTxId, ScriptSignature: &script, Sequence: sequence}
+	txIn := TxIn{PreviousTxId: prevTxId, ScriptSignature: &script, Sequence: sequence}
+	copy(txIn.PreviousTxHash[:], prevTx)
+	return txIn
 }
 
 func (txin *TxIn) Serialize(writer io.Writer, sigHash bool, testNet bool, redeemScript *Script) {
-	utility.WriteBigInt(writer, txin.PreviousTxHash, true)
+
+	var reversed [32]byte
+	copy(reversed[:], txin.PreviousTxHash[:])
+	writer.Write(utility.ReverseBytes(reversed[:]))
 	utility.WriteUint32(writer, txin.PreviousTxId, true)
 
 	if sigHash {
@@ -59,5 +64,7 @@ func (txin *TxIn) PreviousTx(testNet bool) Tx {
 }
 
 func (txin *TxIn) ScriptPubKey(testNet bool) Script {
-	return txin.PreviousTx(testNet).TxOuts[txin.PreviousTxId].ScriptPubKey
+	prevTx := txin.PreviousTx(testNet)
+	prevTxOutput := prevTx.TxOuts[txin.PreviousTxId]
+	return prevTxOutput.ScriptPubKey
 }

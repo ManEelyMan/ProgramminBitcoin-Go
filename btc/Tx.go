@@ -138,3 +138,38 @@ func (tx *Tx) VerifyInput(index int) bool {
 	exec := NewScriptExecutor(&scriptPubKey, txIn.ScriptSignature, hash)
 	return exec.Execute()
 }
+
+func (tx *Tx) IsCoinbase() bool {
+	if len(tx.TxIns) != 1 {
+		return false
+	}
+
+	if bytes.Equal(tx.TxIns[0].PreviousTxHash[:], big.NewInt(0).Bytes()) {
+		return false
+	}
+
+	if tx.TxIns[0].PreviousTxId != 0xffffffff {
+		return false
+	}
+
+	return true
+}
+
+func (tx *Tx) CoinbaseHeight() (uint32, bool) {
+
+	if !tx.IsCoinbase() {
+		return 0, false
+	}
+
+	script := tx.TxIns[0].ScriptSignature
+	ops := script.GetOperations()
+	op, ok := ops[0].(AddDataToStackOperation)
+	if !ok {
+		return 0, false
+	}
+
+	reader := bytes.NewBuffer(op.Data)
+	num := utility.ReadUint32(reader, true)
+
+	return num, true
+}

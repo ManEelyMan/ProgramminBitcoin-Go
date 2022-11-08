@@ -2,10 +2,8 @@ package btc_test
 
 import (
 	"bitcoin-go/btc"
-	"bitcoin-go/utility"
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"testing"
 )
 
@@ -29,8 +27,8 @@ func TestTxParseInputs(t *testing.T) {
 		t.Error()
 	}
 
-	prevTx := utility.HexStringToBigInt("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
-	if tx.TxIns[0].PreviousTxHash.Cmp(prevTx) != 0 {
+	prevTx, _ := hex.DecodeString("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
+	if !bytes.Equal(tx.TxIns[0].PreviousTxHash[:], prevTx) {
 		t.Error()
 	}
 
@@ -104,12 +102,17 @@ func TestTxFetcher(t *testing.T) {
 	f := btc.GetTxFetcher()
 
 	txId1 := tx.TxIns[0].PreviousTxHash
-	txIn1 := f.FetchById(txId1, false, false)
+	tx1 := f.FetchById(txId1, false, false)
 
 	// Make sure cache woks.
-	txIn2 := f.FetchById(txId1, false, false)
+	tx2 := f.FetchById(txId1, false, false)
 
-	fmt.Print(txIn1, txIn2)
+	tx1Hash := tx1.Hash()
+	tx2Hash := tx2.Hash()
+
+	if !bytes.Equal(tx1Hash, tx2Hash) {
+		t.Error()
+	}
 }
 
 func TestTxCalcFee(t *testing.T) {
@@ -157,7 +160,10 @@ func TestTxSerialize(t *testing.T) {
 }
 
 func TestInputValue(t *testing.T) {
-	txHash := utility.HexStringToBigInt("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
+
+	hashSlice, _ := hex.DecodeString("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
+	var txHash [32]byte
+	copy(txHash[:], hashSlice)
 	index := 0
 	expected := 42505594
 	txIn := btc.NewTxIn(txHash, uint32(index), nil, 0xffffffff)
@@ -168,7 +174,9 @@ func TestInputValue(t *testing.T) {
 }
 
 func TestInputPubKey(t *testing.T) {
-	txHash := utility.HexStringToBigInt("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
+	hashSlice, _ := hex.DecodeString("d1c789a9c60383bf715f3f6ad9d14b91fe55f3deb369fe5d9280cb1a01793f81")
+	var txHash [32]byte
+	copy(txHash[:], hashSlice)
 	index := 0
 	txIn := btc.NewTxIn(txHash, uint32(index), nil, 0xffffffff)
 	want, _ := hex.DecodeString("1976a914a802fc56c704ce87c42d7c92eb75e7896bdc41ae88ac")
@@ -197,8 +205,13 @@ func TestFee(t *testing.T) {
 }
 
 func TestSigHash(t *testing.T) {
+
+	hashSlice, _ := hex.DecodeString("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03")
+	var txHash [32]byte
+	copy(txHash[:], hashSlice)
+
 	fetch := btc.GetTxFetcher()
-	tx := fetch.FetchById(utility.HexStringToBigInt("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03"), false, false)
+	tx := fetch.FetchById(txHash, false, false)
 	expected, _ := hex.DecodeString("27e0c5994dec7824e56dec6b2fcb342eb7cdb0d0957c2fce9882f715e85d81a6")
 	hash := tx.SigHash(0, nil)
 	if !bytes.Equal(hash, expected) {
@@ -207,23 +220,75 @@ func TestSigHash(t *testing.T) {
 }
 
 func TestVerifyP2PKH(t *testing.T) {
+
+	hashSlice, _ := hex.DecodeString("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03")
+	var txHash [32]byte
+	copy(txHash[:], hashSlice)
+
 	fetcher := btc.GetTxFetcher()
-	tx1 := fetcher.FetchById(utility.HexStringToBigInt("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03"), false, false)
+	tx1 := fetcher.FetchById(txHash, false, false)
 	if !tx1.Verify() {
 		t.Error()
 	}
 
-	tx2 := fetcher.FetchById(utility.HexStringToBigInt("5418099cc755cb9dd3ebc6cf1a7888ad53a1a3beb5a025bce89eb1bf7f1650a2"), true, false)
+	hashSlice, _ = hex.DecodeString("5418099cc755cb9dd3ebc6cf1a7888ad53a1a3beb5a025bce89eb1bf7f1650a2")
+	copy(txHash[:], hashSlice)
+	tx2 := fetcher.FetchById(txHash, true, false)
 	if !tx2.Verify() {
 		t.Error()
 	}
 }
 
 func TestVerifyP2SH(t *testing.T) {
+	hashSlice, _ := hex.DecodeString("46df1a9484d0a81d03ce0ee543ab6e1a23ed06175c104a178268fad381216c2b")
+	var txHash [32]byte
+	copy(txHash[:], hashSlice)
+
 	fetcher := btc.GetTxFetcher()
-	tx := fetcher.FetchById(utility.HexStringToBigInt("46df1a9484d0a81d03ce0ee543ab6e1a23ed06175c104a178268fad381216c2b"), false, false)
+	tx := fetcher.FetchById(txHash, false, false)
 
 	if !tx.Verify() {
+		t.Error()
+	}
+}
+
+func TestIsCoinBaseTx(t *testing.T) {
+
+	rawTx, err := hex.DecodeString("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff5e03d71b07254d696e656420627920416e74506f6f6c20626a31312f4542312f4144362f43205914293101fabe6d6d678e2c8c34afc36896e7d9402824ed38e856676ee94bfdb0c6c4bcd8b2e5666a0400000000000000c7270000a5e00e00ffffffff01faf20b58000000001976a914338c84849423992471bffb1a54a8d9b1d69dc28a88ac00000000")
+	if err != nil {
+		t.Error()
+	}
+
+	reader := bytes.NewBuffer(rawTx)
+	tx := btc.ParseTx(reader, false)
+	isCoinbase := tx.IsCoinbase()
+
+	if !isCoinbase {
+		t.Error()
+	}
+}
+
+func TestCoinbaseHeight(t *testing.T) {
+
+	rawTx, _ := hex.DecodeString("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff5e03d71b07254d696e656420627920416e74506f6f6c20626a31312f4542312f4144362f43205914293101fabe6d6d678e2c8c34afc36896e7d9402824ed38e856676ee94bfdb0c6c4bcd8b2e5666a0400000000000000c7270000a5e00e00ffffffff01faf20b58000000001976a914338c84849423992471bffb1a54a8d9b1d69dc28a88ac00000000")
+	var expected uint32 = 465879
+	reader := bytes.NewBuffer(rawTx)
+	tx := btc.ParseTx(reader, false)
+	height, ok := tx.CoinbaseHeight()
+	if !ok {
+		t.Error()
+	}
+
+	if height != expected {
+		t.Error()
+	}
+
+	rawTx, _ = hex.DecodeString("0100000001813f79011acb80925dfe69b3def355fe914bd1d96a3f5f71bf8303c6a989c7d1000000006b483045022100ed81ff192e75a3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c31967743a9c8e10615bed01210349fc4e631e3624a545de3f89f5d8684c7b8138bd94bdd531d2e213bf016b278afeffffff02a135ef01000000001976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac99c39800000000001976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac19430600")
+	reader = bytes.NewBuffer(rawTx)
+	tx = btc.ParseTx(reader, false)
+	height, ok = tx.CoinbaseHeight()
+
+	if height != 0 || ok {
 		t.Error()
 	}
 }

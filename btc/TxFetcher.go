@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"math/big"
 	"net/http"
 	"sync"
 )
@@ -28,24 +27,20 @@ func GetTxFetcher() TxFetcher {
 	return singleton
 }
 
-func (f *TxFetcher) FetchById(txId *big.Int, testNet bool, fresh bool) Tx {
-	var bytes [32]byte
-	copy(bytes[0:], txId.Bytes())
-
-	tx, ok := singleton.cache[bytes]
+func (f *TxFetcher) FetchById(txId [32]byte, testNet bool, fresh bool) Tx {
+	tx, ok := singleton.cache[txId]
 	if !ok || fresh {
 		tx = f.fetchTransaction(txId, testNet)
-		f.cache[bytes] = tx // TODO: Create a disk-persisting cache.
+		f.cache[txId] = tx // TODO: Create a disk-persisting cache.
 	}
 
 	return tx
 }
 
-func (f *TxFetcher) fetchTransaction(txId *big.Int, testNet bool) Tx {
+func (f *TxFetcher) fetchTransaction(txId [32]byte, testNet bool) Tx {
 	url := utility.IIF(testNet, "https://blockstream.info/testnet/api/tx/%v/hex", "https://blockstream.info/api/tx/%v/hex").(string)
 
-	idBytes := txId.Bytes()
-	url = fmt.Sprintf(url, hex.EncodeToString(idBytes))
+	url = fmt.Sprintf(url, hex.EncodeToString(txId[:]))
 
 	client := http.DefaultClient
 	rsp, err := client.Get(url)
@@ -70,8 +65,9 @@ func (f *TxFetcher) fetchTransaction(txId *big.Int, testNet bool) Tx {
 
 	reader := bytes.NewBuffer(b)
 	tx := ParseTx(reader, testNet)
+	txHash := tx.Hash()
 
-	if !bytes.Equal(tx.Hash(), idBytes) {
+	if !bytes.Equal(txHash, txId[:]) {
 		fmt.Println("Sanity check broke: Id mismatch between requested and received Transaction!")
 	}
 	return tx

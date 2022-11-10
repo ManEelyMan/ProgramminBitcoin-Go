@@ -4,7 +4,6 @@ import (
 	"bitcoin-go/utility"
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"math/big"
 )
@@ -134,7 +133,6 @@ func (tx *Tx) VerifyInput(index int) bool {
 
 	hash := big.NewInt(0)
 	hash.SetBytes(z)
-	fmt.Printf("Hash: %+v\n", hash)
 	exec := NewScriptExecutor(&scriptPubKey, txIn.ScriptSignature, hash)
 	return exec.Execute()
 }

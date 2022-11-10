@@ -104,6 +104,5 @@ func executeScript(script *Script, context *ExecutionContext) bool {
 		}
 	}
 
-	fmt.Printf("%+v\n", operations)
 	return true
 }

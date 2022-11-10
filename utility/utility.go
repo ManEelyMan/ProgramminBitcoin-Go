@@ -1,8 +1,6 @@
 package utility
 
 import (
-	"encoding/hex"
-	"fmt"
 	"math/big"
 )
 
@@ -31,8 +29,4 @@ func IIF(condition bool, ifTrue interface{}, ifFalse interface{}) interface{} {
 	} else {
 		return ifFalse
 	}
-}
-
-func FmtBytesToHex(bytes []byte) {
-	fmt.Printf("Hex: %v\n", hex.EncodeToString(bytes))
 }

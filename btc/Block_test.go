@@ -1,8 +1,10 @@
 package btc
 
 import (
+	"bitcoin-go/utility"
 	"bytes"
 	"encoding/hex"
+	"math/big"
 	"testing"
 )
 
@@ -43,11 +45,13 @@ func TestBlockParse(t *testing.T) {
 		t.Error()
 	}
 
-	if block.Bits != 0xe93c0118 {
+	expectedBits, _ := hex.DecodeString("e93c0118")
+	if !bytes.Equal(block.Bits[:], expectedBits) {
 		t.Error()
 	}
 
-	if block.Nonce != 0xa4ffd71d {
+	expectedNonce, _ := hex.DecodeString("a4ffd71d")
+	if !bytes.Equal(block.Nonce[:], expectedNonce) {
 		t.Error()
 	}
 }
@@ -122,6 +126,52 @@ func TestBlockBIP141(t *testing.T) {
 
 	block2 := blockFromHexString("0000002066f09203c1cf5ef1531f24ed21b1915ae9abeb691f0d2e0100000000000000003de0976428ce56125351bae62c5b8b8c79d8297c702ea05d60feabb4ed188b59c36fa759e93c0118b74b2618")
 	if block2.BIP141() {
+		t.Error()
+	}
+}
+
+func TestBlockCalculateNewBits(t *testing.T) {
+
+	var prevBits [4]byte
+	bits, _ := hex.DecodeString("54d80118")
+	copy(prevBits[:], bits)
+
+	newBits := CalculateNewBits(prevBits, 302400)
+
+	expectedBits, _ := hex.DecodeString("00157617")
+
+	if !bytes.Equal(expectedBits, newBits[:]) {
+		t.Error()
+	}
+}
+
+func TestBlockTarget(t *testing.T) {
+	block := blockFromHexString("020000208ec39428b17323fa0ddec8e887b4a7c53b8c0a0a220cfd0000000000000000005b0750fce0a889502d40508d39576821155e9c9e3f5c3157f961db38fd8b25be1e77a759e93c0118a4ffd71d")
+	target := block.Target()
+
+	expected := utility.HexStringToBigInt("13ce9000000000000000000000000000000000000000000")
+
+	if expected.Cmp(target) != 0 {
+		t.Error()
+	}
+}
+
+func TestBlockDifficulty(t *testing.T) {
+	block := blockFromHexString("020000208ec39428b17323fa0ddec8e887b4a7c53b8c0a0a220cfd0000000000000000005b0750fce0a889502d40508d39576821155e9c9e3f5c3157f961db38fd8b25be1e77a759e93c0118a4ffd71d")
+	diff := big.NewInt(888171856257)
+	if block.Difficulty().Cmp(diff) != 0 {
+		t.Error()
+	}
+}
+
+func TestBlockCheckProofOfWork(t *testing.T) {
+	block := blockFromHexString("04000000fbedbbf0cfdaf278c094f187f2eb987c86a199da22bbb20400000000000000007b7697b29129648fa08b4bcd13c9d5e60abb973a1efac9c8d573c71c807c56c3d6213557faa80518c3737ec1")
+	if !block.CheckProofOfWork() {
+		t.Error()
+	}
+
+	block = blockFromHexString("04000000fbedbbf0cfdaf278c094f187f2eb987c86a199da22bbb20400000000000000007b7697b29129648fa08b4bcd13c9d5e60abb973a1efac9c8d573c71c807c56c3d6213557faa80518c3737ec0")
+	if block.CheckProofOfWork() {
 		t.Error()
 	}
 }

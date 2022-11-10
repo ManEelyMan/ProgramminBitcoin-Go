@@ -41,7 +41,6 @@ func TestPubPoint(t *testing.T) {
 	firstExp = firstExp.Exp(two, big.NewInt(240), nil)
 	secondExp = secondExp.Exp(two, big.NewInt(31), nil)
 	secret = secret.Add(firstExp, secondExp)
-	// fmt.Printf("secret: %+v\n", secret)
 	mul = ecc.G.ScalarMultiply(secret)
 	if !point.Equals(&mul) {
 		t.Error()
@@ -184,9 +183,6 @@ func SECParseTestCase(coef *big.Int) bool {
 
 func PointAddressTestCase(secret *big.Int, mainNetAddr string, testNetAddr string, compressed bool) bool {
 	point := ecc.G.ScalarMultiply(secret)
-
-	// fmt.Printf("Secret: %+v\n", secret)
-	// fmt.Printf("Point: {%+v,%+v}\n", point.x, point.y)
 
 	mainnet := point.Address(compressed, false)
 	testnet := point.Address(compressed, true)

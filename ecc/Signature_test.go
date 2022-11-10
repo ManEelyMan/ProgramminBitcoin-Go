@@ -3,7 +3,6 @@ package ecc_test
 import (
 	"bitcoin-go/ecc"
 	"bitcoin-go/utility"
-	"fmt"
 	"testing"
 )
 
@@ -19,6 +18,4 @@ func TestDER(t *testing.T) {
 	if !sig2.Equals(&sig) {
 		t.Errorf("Didn't work")
 	}
-
-	fmt.Printf("%v", der)
 }

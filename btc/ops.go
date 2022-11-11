@@ -268,13 +268,6 @@ func decodeNumber(buffer []byte) int64 {
 	}
 }
 
-func pushNumberOnStack(stack *collections.Stack, num int64) bool {
-	// The number -1 is pushed onto the stack.
-	buff := encodeNumber(num)
-	stack.Push(buff)
-	return true
-}
-
 func twoIntCompareOp(stack *collections.Stack, comparer twoIntOpComparator) bool {
 	if stack.Length() < 2 {
 		return false
@@ -340,75 +333,6 @@ func opFalse(context *ExecutionContext) bool {
 	context.Stack.Push(make([]byte, 0))
 	return true
 }
-
-// func opNeg1(context *ExecutionContext) bool {
-// 	// The number -1 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, -1)
-// }
-// func op1(context *ExecutionContext) bool {
-// 	// The number 1 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 1)
-// }
-// func op2(context *ExecutionContext) bool {
-// 	// The number 2 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 2)
-// }
-// func op3(context *ExecutionContext) bool {
-// 	// The number 3 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 3)
-// }
-// func op4(context *ExecutionContext) bool {
-// 	// The number 4 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 4)
-// }
-// func op5(context *ExecutionContext) bool {
-// 	// The number 5 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 5)
-// }
-// func op6(context *ExecutionContext) bool {
-// 	// The number 6 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 6)
-// }
-// func op7(context *ExecutionContext) bool {
-// 	// The number 7 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 7)
-// }
-// func op8(context *ExecutionContext) bool {
-// 	// The number 8 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 8)
-// }
-// func op9(context *ExecutionContext) bool {
-// 	// The number 9 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 9)
-// }
-// func op10(context *ExecutionContext) bool {
-// 	// The number 10 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 10)
-// }
-// func op11(context *ExecutionContext) bool {
-// 	// The number 11 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 11)
-// }
-// func op12(context *ExecutionContext) bool {
-// 	// The number 12 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 12)
-// }
-// func op13(context *ExecutionContext) bool {
-// 	// The number 13 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 13)
-// }
-// func op14(context *ExecutionContext) bool {
-// 	// The number 14 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 14)
-// }
-// func op15(context *ExecutionContext) bool {
-// 	// The number 15 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 15)
-// }
-// func op16(context *ExecutionContext) bool {
-// 	// The number 16 is pushed onto the stack.
-// 	return pushNumberOnStack(context.Stack, 16)
-// }
 
 func opVerify(context *ExecutionContext) bool {
 	// Marks transaction as invalid if top stack value is not true. The top stack value is removed.

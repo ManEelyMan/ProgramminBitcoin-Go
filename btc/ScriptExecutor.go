@@ -45,12 +45,9 @@ func (ex *ScriptExecutor) Execute() bool {
 	}
 
 	// 3. Verify completion
-	if stack.Length() == 0 {
-		return false
-	}
-
 	// 4. Ensure a non-zero value is here.
-	if b, _ := stack.Pop(); len(b) == 0 {
+	ok = opVerify(&executionContext)
+	if !ok {
 		return false
 	}
 
@@ -68,16 +65,11 @@ func (ex *ScriptExecutor) Execute() bool {
 		}
 
 		// Verify completion (again)
-		if stack.Length() == 0 {
-			return false
-		}
-
-		// Ensure a non-zero value is here. (again)
-		if b, _ := stack.Pop(); len(b) == 0 {
+		ok = opVerify(&executionContext)
+		if !ok {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -91,7 +83,7 @@ func executeScript(script *Script, context *ExecutionContext) bool {
 
 		// Make some decisions based on the op code!
 		if opCode == 0x63 || opCode == 0x64 || opCode == 0x67 || opCode == 0x69 {
-			// TODO: Figure out how to track the if/else/endif stuff.
+			// TODO: Figure out how to track the if/ifnot/else/endif stuff.
 			return false // NOT IMPLEMENTED
 		} else {
 

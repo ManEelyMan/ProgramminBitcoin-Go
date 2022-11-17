@@ -1,4 +1,4 @@
-package btc
+package transaction
 
 import (
 	"bitcoin-go/utility"

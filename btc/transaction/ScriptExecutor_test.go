@@ -1,7 +1,6 @@
-package btc_test
+package transaction
 
 import (
-	"bitcoin-go/btc"
 	"bytes"
 	"encoding/hex"
 	"testing"
@@ -12,7 +11,7 @@ func TestScriptExecution(t *testing.T) {
 	buff := bytes.NewBuffer(b)
 
 	// Pick one of the inputs to see if it can be spent.
-	tx := btc.ParseTx(buff, false)
+	tx := ParseTx(buff, false)
 	tx.Verify()
 
 	// scriptSignature := tx.TxIns[0].ScriptSignature

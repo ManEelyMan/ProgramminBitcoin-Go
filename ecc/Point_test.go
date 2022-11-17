@@ -5,7 +5,6 @@ import (
 	"bitcoin-go/utility"
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"testing"
 )
@@ -136,20 +135,20 @@ func BytesFromHex(s string) []byte {
 
 func SECTestCase(coef *big.Int, expectedUncompressed string, expectedCompressed string) bool {
 
-	fmt.Printf("Coef: %+v\n", coef)
+	//fmt.Printf("Coef: %+v\n", coef)
 
 	point := ecc.G.ScalarMultiply(coef)
-	fmt.Printf("Point: %+v\n", point)
+	//fmt.Printf("Point: %+v\n", point)
 
 	uncompressed := BytesFromHex(expectedUncompressed)
-	fmt.Printf("Uncomp expected: %+v\n", uncompressed)
+	//fmt.Printf("Uncomp expected: %+v\n", uncompressed)
 	uncompSec := point.ToSEC(false)
-	fmt.Printf("Uncomp actual: %+v\n", uncompSec)
+	//fmt.Printf("Uncomp actual: %+v\n", uncompSec)
 
 	compressed := BytesFromHex(expectedCompressed)
-	fmt.Printf("Comp expected: %+v\n", compressed)
+	//fmt.Printf("Comp expected: %+v\n", compressed)
 	compSec := point.ToSEC(true)
-	fmt.Printf("Comp actual: %+v\n", compSec)
+	//fmt.Printf("Comp actual: %+v\n", compSec)
 
 	if !bytes.Equal(uncompressed, uncompSec) {
 		return false

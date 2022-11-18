@@ -73,26 +73,10 @@ func (n *SimpleNode) Send(message messages.Message) error {
 	return err
 }
 
-func (n *SimpleNode) Read() (*NetworkEnvelope, error) {
-
-	readBuffer := make([]byte, 2048) // Twice the maximum block size.  TODO: Make this static for reuse (unless I multithread this)
-	count, err := n.connection.Read(readBuffer)
-	if err != nil {
-		return nil, err
-	}
-
-	if count >= len(readBuffer) {
-		panic("We maxed out our read buffer!")
-	}
-
-	reader := bytes.NewBuffer(readBuffer)
-	return ParseNetworkEnvelope(reader)
-}
-
 func (n *SimpleNode) WaitFor(messageTypes []string) (messages.Message, error) {
 
 	for { // Loop until we get one of the messages we want (or forever!!)
-		env, err := n.Read()
+		env, err := ParseNetworkEnvelope(n.connection)
 		if err != nil {
 			return nil, err
 		}

@@ -89,8 +89,11 @@ func (env *NetworkEnvelope) Serialize() []byte {
 }
 
 func (env *NetworkEnvelope) GetMessage() messages.Message {
-	if env.payloadMessage == nil {
+	if env.payloadMessage != nil {
 		msg, _ := messages.ParseMessagePayload(env.Command, bytes.NewBuffer(env.Payload))
+		env.payloadMessage = &msg
+	} else {
+		msg := messages.NewGenericMessage(env.Command)
 		env.payloadMessage = &msg
 	}
 

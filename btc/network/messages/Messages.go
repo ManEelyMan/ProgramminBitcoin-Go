@@ -10,6 +10,7 @@ const PONG_MESSAGE_NAME = "pong"
 const VERACK_MESSAGE_NAME = "verack"
 const VERSION_MESSAGE_NAME = "version"
 const GETHEADERS_MESSAGE_NAME = "getheaders"
+const HEADERS_MESSAGE_NAME = "headers"
 
 type Message interface {
 	GetName() string
@@ -27,6 +28,7 @@ func init() {
 	messageMap[PING_MESSAGE_NAME] = parsePingMessage
 	messageMap[PONG_MESSAGE_NAME] = parsePongMessage
 	messageMap[GETHEADERS_MESSAGE_NAME] = parseGetHeadersMessage
+	messageMap[HEADERS_MESSAGE_NAME] = parseHeadersMessage
 }
 
 func ParseMessagePayload(command string, reader io.Reader) (Message, error) {

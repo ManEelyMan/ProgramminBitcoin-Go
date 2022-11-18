@@ -47,6 +47,22 @@ func (n *SimpleNode) Close() error {
 	return n.connection.Close()
 }
 
+func (n *SimpleNode) Handshake() error {
+
+	version := messages.NewDefaultVersionMessage()
+	err := n.Send(version)
+	if err != nil {
+		return err
+	}
+
+	_, err = n.WaitFor([]string{messages.VERACK_MESSAGE_NAME})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (n *SimpleNode) Send(message messages.Message) error {
 	writer := bytes.NewBuffer(make([]byte, 0))
 	message.Serialize(writer)

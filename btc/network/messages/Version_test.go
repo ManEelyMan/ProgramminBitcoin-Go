@@ -8,16 +8,7 @@ import (
 
 func TestVersionMessage(t *testing.T) {
 
-	v := Version{
-		Version:                70015,
-		SenderNetworkPort:      [2]byte{0x20, 0x8D},
-		ReceiverNetworkPort:    [2]byte{0x20, 0x8D},
-		Timestamp:              0,
-		Nonce:                  [8]byte{0, 0, 0, 0, 0, 0, 0, 0},
-		UserAgent:              "/programmingbitcoin:0.1/",
-		ReceiverNetworkAddress: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0},
-		SenderNetworkAddress:   [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0},
-	}
+	v := NewDefaultVersionMessage()
 
 	writer := bytes.NewBuffer(make([]byte, 0))
 	v.Serialize(writer)

@@ -33,25 +33,39 @@ func init() {
 }
 
 func ParseBlock(reader io.Reader) (Block, error) {
-	version := utility.ReadUint32(reader, true)
-	prevBlock, err := utility.ReadBytes(reader, 32)
-	if err != nil {
-		return Block{}, err
-	}
-	prevBlock = utility.ReverseBytes(prevBlock)
+	block := Block{}
 
-	merkleRoot, err := utility.ReadBytes(reader, 32)
-	if err != nil {
-		return Block{}, err
-	}
-	merkleRoot = utility.ReverseBytes(merkleRoot)
-	timestamp := utility.ReadUint32(reader, true)
+	// Version
+	block.Version = utility.ReadUint32(reader, true)
 
-	block := Block{Version: version, Timestamp: timestamp}
-	reader.Read(block.Bits[:])
-	reader.Read(block.Nonce[:])
-	copy(block.PreviousBlock[:], prevBlock)
-	copy(block.MerkleRoot[:], merkleRoot)
+	// PreviousBlock
+	_, err := reader.Read(block.PreviousBlock[:])
+	if err != nil {
+		return block, err
+	}
+	utility.ReverseBytes(block.PreviousBlock[:])
+
+	// MerkleRoot
+	_, err = reader.Read(block.MerkleRoot[:])
+	if err != nil {
+		return block, err
+	}
+	utility.ReverseBytes(block.MerkleRoot[:])
+
+	// Timestamp
+	block.Timestamp = utility.ReadUint32(reader, true)
+
+	// Bits
+	_, err = reader.Read(block.Bits[:])
+	if err != nil {
+		return block, err
+	}
+
+	// Nonce
+	_, err = reader.Read(block.Nonce[:])
+	if err != nil {
+		return block, err
+	}
 
 	return block, nil
 }

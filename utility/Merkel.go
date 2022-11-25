@@ -44,6 +44,19 @@ func MerkelRoot(hashes [][]byte) []byte {
 		hashes = MerkelParentLevel(hashes)
 	}
 
-	// Return the root and make it little-endian
+	// Return the root
 	return hashes[0]
+}
+
+func MerkelBytesToBitField(flags []byte) []bool {
+	bitField := make([]bool, 0)
+
+	for _, b := range flags {
+		for i := 0; i < 8; i++ {
+			bitField = append(bitField, (b&1) == 1)
+			b >>= 1
+		}
+	}
+
+	return bitField
 }

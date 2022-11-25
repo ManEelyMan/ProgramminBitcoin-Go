@@ -11,6 +11,7 @@ const VERACK_MESSAGE_NAME = "verack"
 const VERSION_MESSAGE_NAME = "version"
 const GETHEADERS_MESSAGE_NAME = "getheaders"
 const HEADERS_MESSAGE_NAME = "headers"
+const MERKLE_BLOCK_MESSAGE_NAME = "merkleblock"
 
 type Message interface {
 	GetName() string
@@ -29,6 +30,7 @@ func init() {
 	messageMap[PONG_MESSAGE_NAME] = parsePongMessage
 	messageMap[GETHEADERS_MESSAGE_NAME] = parseGetHeadersMessage
 	messageMap[HEADERS_MESSAGE_NAME] = parseHeadersMessage
+	messageMap[MERKLE_BLOCK_MESSAGE_NAME] = parseMerkleBlockMessage
 }
 
 func ParseMessagePayload(command string, reader io.Reader) (Message, error) {

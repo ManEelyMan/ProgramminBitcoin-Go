@@ -1,7 +1,8 @@
-package block
+package messages
 
 import (
 	"bitcoin-go/utility"
+	"bytes"
 	"io"
 )
 
@@ -15,6 +16,7 @@ type MerkleBlock struct {
 	Total         uint32
 	Hashes        [][32]byte
 	Flags         []byte
+	isValid       *bool
 }
 
 func ParseMerkleBlock(reader io.Reader) (MerkleBlock, error) {
@@ -79,20 +81,37 @@ func ParseMerkleBlock(reader io.Reader) (MerkleBlock, error) {
 	return block, nil
 }
 
+func parseMerkleBlockMessage(reader io.Reader) (Message, error) {
+	return ParseMerkleBlock(reader)
+}
+
+func (mb MerkleBlock) GetName() string {
+	return MERKLE_BLOCK_MESSAGE_NAME
+}
+func (mb MerkleBlock) Serialize(io.Writer) {
+	panic("serialize not implemented")
+}
+
 func (mb *MerkleBlock) IsValid() bool {
 
-	panic("not yet implemented")
+	// Return cached value
+	if mb.isValid != nil {
+		return *mb.isValid
+	}
 
-	/*      '''Verifies whether the merkle tree information validates to the merkle root'''
-	        # convert the flags field to a bit field
-	        flag_bits = bytes_to_bit_field(self.flags)
-	        # reverse self.hashes for the merkle root calculation
-	        hashes = [h[::-1] for h in self.hashes]
-	        # initialize the merkle tree
-	        merkle_tree = MerkleTree(self.total)
-	        # populate the tree with flag bits and hashes
-	        merkle_tree.populate_tree(flag_bits, hashes)
-	        # check if the computed root reversed is the same as the merkle root
-	        return merkle_tree.root()[::-1] == self.merkle_root
-	*/
+	// Reverse the hashes
+	for i := 0; i < len(mb.Hashes); i++ {
+		utility.ReverseBytes(mb.Hashes[i][:])
+	}
+
+	tree := NewMerkleTree(mb.Total)
+	tree.PopulateTree(utility.MerkelBytesToBitField(mb.Flags), mb.Hashes)
+
+	root := tree.Root()
+	derefRoot := *root
+	utility.ReverseBytes(derefRoot[:])
+
+	isValid := bytes.Equal(derefRoot[:], mb.MerkleRoot[:])
+	mb.isValid = &isValid
+	return *mb.isValid
 }

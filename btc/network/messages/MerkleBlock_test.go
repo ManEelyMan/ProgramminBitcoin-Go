@@ -1,4 +1,4 @@
-package block
+package messages
 
 import (
 	"bitcoin-go/utility"
